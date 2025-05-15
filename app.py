@@ -29,7 +29,6 @@ def campanhas():
         LIMIT 100
     """
 
-    # ID da conta com campanhas (sem traços)
     customer_id = os.environ.get("CUSTOMER_ID")
 
     response = ga_service.search(customer_id=customer_id, query=query)
@@ -45,4 +44,5 @@ def campanhas():
     return jsonify(resultado)
 
 if __name__ == "__main__":
-    app.run(port=3000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
