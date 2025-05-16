@@ -1,8 +1,12 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_file
 from google.ads.googleads.client import GoogleAdsClient
 import os
 
 app = Flask(__name__)
+
+@app.route("/openapi.json", methods=["GET"])
+def openapi_spec():
+    return send_file("openapi.yaml", mimetype="application/yaml")
 
 # Carrega configurações da API a partir das variáveis de ambiente
 config = {
