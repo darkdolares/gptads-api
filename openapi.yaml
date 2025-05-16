@@ -1,0 +1,29 @@
+openapi: 3.1.0
+info:
+  title: GPTAds API
+  description: API para consultar campanhas do Google Ads
+  version: 1.0.0
+servers:
+  - url: https://gptads-api.onrender.com
+paths:
+  /campanhas:
+    get:
+      operationId: listarCampanhas
+      summary: Lista campanhas do Google Ads
+      description: Retorna uma lista com o nome, ID e status das campanhas ativas na conta.
+      responses:
+        '200':
+          description: Lista de campanhas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    nome:
+                      type: string
+                    status:
+                      type: string
