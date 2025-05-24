@@ -6,17 +6,3 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
     autoDeploy: true
-
-    envVars:
-      - key: DEVELOPER_TOKEN
-        value: YOUR_DEVELOPER_TOKEN
-      - key: CLIENT_ID
-        value: YOUR_CLIENT_ID
-      - key: CLIENT_SECRET
-        value: YOUR_CLIENT_SECRET
-      - key: REFRESH_TOKEN
-        value: YOUR_REFRESH_TOKEN
-      - key: LOGIN_CUSTOMER_ID
-        value: YOUR_LOGIN_CUSTOMER_ID
-      - key: CUSTOMER_ID
-        value: YOUR_CUSTOMER_ID
