@@ -1,18 +1,17 @@
 from flask import Flask, jsonify
 from google.ads.googleads.client import GoogleAdsClient
-from google.ads.googleads.errors import GoogleAdsException
 import os
 
 app = Flask(__name__)
 
-# Carregar configuração a partir das variáveis de ambiente
+# Configurações da API
 config = {
     "developer_token": os.getenv("DEVELOPER_TOKEN"),
     "client_id": os.getenv("CLIENT_ID"),
     "client_secret": os.getenv("CLIENT_SECRET"),
     "refresh_token": os.getenv("REFRESH_TOKEN"),
     "login_customer_id": os.getenv("LOGIN_CUSTOMER_ID"),
-    "use_proto_plus": True,
+    "use_proto_plus": True
 }
 
 client = GoogleAdsClient.load_from_dict(config)
@@ -20,7 +19,7 @@ client = GoogleAdsClient.load_from_dict(config)
 
 @app.route("/")
 def home():
-    return jsonify({"status": "API do Google Ads rodando com sucesso na versão 26"})
+    return jsonify({"status": "API do Google Ads rodando com sucesso!"})
 
 
 @app.route("/campanhas")
@@ -31,35 +30,30 @@ def campanhas():
 
         query = """
             SELECT
-              campaign.id,
-              campaign.name,
-              campaign.status,
-              campaign.advertising_channel_type,
-              campaign.start_date,
-              campaign.end_date,
-              campaign.bidding_strategy_type,
-              campaign_budget.amount_micros,
-              metrics.impressions,
-              metrics.clicks,
-              metrics.ctr,
-              metrics.average_cpc,
-              metrics.average_cpm,
-              metrics.conversions
+                campaign.id,
+                campaign.name,
+                campaign.status,
+                campaign.advertising_channel_type,
+                campaign.start_date,
+                campaign.end_date,
+                campaign.bidding_strategy_type,
+                campaign_budget.amount_micros,
+                metrics.impressions,
+                metrics.clicks,
+                metrics.ctr,
+                metrics.average_cpc,
+                metrics.average_cpm,
+                metrics.conversions
             FROM campaign
             LIMIT 50
         """
 
-        search_request = client.get_type("SearchGoogleAdsRequest")
-        search_request.customer_id = customer_id
-        search_request.query = query
-
-        response = ga_service.search(request=search_request)
+        response = ga_service.search(customer_id=customer_id, query=query)
 
         campanhas = []
-
         for row in response:
             campanhas.append({
-                "id": row.campaign.id,
+                "id": str(row.campaign.id),
                 "nome": row.campaign.name,
                 "status": row.campaign.status.name,
                 "tipo_canal": row.campaign.advertising_channel_type.name,
@@ -71,56 +65,51 @@ def campanhas():
                     "impressoes": row.metrics.impressions,
                     "cliques": row.metrics.clicks,
                     "ctr": row.metrics.ctr,
-                    "cpc_medio": float(row.metrics.average_cpc.micros) / 1e6 if row.metrics.average_cpc else None,
-                    "cpm_medio": float(row.metrics.average_cpm.micros) / 1e6 if row.metrics.average_cpm else None,
-                    "conversoes": row.metrics.conversions,
+                    "cpc_medio": row.metrics.average_cpc,
+                    "cpm_medio": row.metrics.average_cpm,
+                    "conversoes": row.metrics.conversions
                 }
             })
 
         return jsonify(campanhas)
 
-    except GoogleAdsException as ex:
-        return jsonify({"error": ex.failure.message}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/palavras-chave")
-def keywords():
+def palavras_chave():
     try:
         customer_id = os.getenv("CUSTOMER_ID")
         ga_service = client.get_service("GoogleAdsService")
 
         query = """
             SELECT
-              campaign.id,
-              campaign.name,
-              ad_group.id,
-              ad_group.name,
-              ad_group_criterion.keyword.text,
-              ad_group_criterion.keyword.match_type,
-              ad_group_criterion.status,
-              metrics.impressions,
-              metrics.clicks,
-              metrics.ctr,
-              metrics.average_cpc,
-              metrics.conversions
+                campaign.id,
+                campaign.name,
+                ad_group.id,
+                ad_group.name,
+                ad_group_criterion.keyword.text,
+                ad_group_criterion.keyword.match_type,
+                ad_group_criterion.status,
+                metrics.impressions,
+                metrics.clicks,
+                metrics.ctr,
+                metrics.average_cpc,
+                metrics.conversions
             FROM keyword_view
             WHERE ad_group_criterion.status != 'REMOVED'
             LIMIT 100
         """
 
-        search_request = client.get_type("SearchGoogleAdsRequest")
-        search_request.customer_id = customer_id
-        search_request.query = query
-
-        response = ga_service.search(request=search_request)
+        response = ga_service.search(customer_id=customer_id, query=query)
 
         palavras = []
-
         for row in response:
             palavras.append({
-                "campanha_id": row.campaign.id,
+                "campanha_id": str(row.campaign.id),
                 "campanha_nome": row.campaign.name,
-                "grupo_id": row.ad_group.id,
+                "grupo_id": str(row.ad_group.id),
                 "grupo_nome": row.ad_group.name,
                 "palavra_chave": row.ad_group_criterion.keyword.text,
                 "tipo_correspondencia": row.ad_group_criterion.keyword.match_type.name,
@@ -129,15 +118,15 @@ def keywords():
                     "impressoes": row.metrics.impressions,
                     "cliques": row.metrics.clicks,
                     "ctr": row.metrics.ctr,
-                    "cpc_medio": float(row.metrics.average_cpc.micros) / 1e6 if row.metrics.average_cpc else None,
-                    "conversoes": row.metrics.conversions,
+                    "cpc_medio": row.metrics.average_cpc,
+                    "conversoes": row.metrics.conversions
                 }
             })
 
         return jsonify(palavras)
 
-    except GoogleAdsException as ex:
-        return jsonify({"error": ex.failure.message}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/segmentacao")
@@ -148,39 +137,33 @@ def segmentacao():
 
         query = """
             SELECT
-              campaign.id,
-              campaign.name,
-              campaign_criterion.location.geo_target_constant,
-              campaign_criterion.device.type,
-              campaign_criterion.gender.type,
-              campaign_criterion.age_range.type
+                campaign.id,
+                campaign.name,
+                campaign_criterion.location.geo_target_constant,
+                campaign_criterion.device.type,
+                campaign_criterion.gender.type,
+                campaign_criterion.age_range.type
             FROM campaign_criterion
-            WHERE campaign_criterion.status != 'REMOVED'
             LIMIT 100
         """
 
-        search_request = client.get_type("SearchGoogleAdsRequest")
-        search_request.customer_id = customer_id
-        search_request.query = query
+        response = ga_service.search(customer_id=customer_id, query=query)
 
-        response = ga_service.search(request=search_request)
-
-        criterios = []
-
+        segmentacoes = []
         for row in response:
-            criterios.append({
-                "campanha_id": row.campaign.id,
+            segmentacoes.append({
+                "campanha_id": str(row.campaign.id),
                 "campanha_nome": row.campaign.name,
                 "local": getattr(row.campaign_criterion.location, "geo_target_constant", None),
                 "dispositivo": getattr(row.campaign_criterion.device, "type_", None),
                 "genero": getattr(row.campaign_criterion.gender, "type_", None),
-                "faixa_etaria": getattr(row.campaign_criterion.age_range, "type_", None),
+                "faixa_etaria": getattr(row.campaign_criterion.age_range, "type_", None)
             })
 
-        return jsonify(criterios)
+        return jsonify(segmentacoes)
 
-    except GoogleAdsException as ex:
-        return jsonify({"error": ex.failure.message}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
