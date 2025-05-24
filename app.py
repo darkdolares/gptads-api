@@ -4,24 +4,24 @@ import os
 
 app = Flask(__name__)
 
-# Configurações da API
+# 🔐 Configuração via variáveis de ambiente
 config = {
     "developer_token": os.getenv("DEVELOPER_TOKEN"),
     "client_id": os.getenv("CLIENT_ID"),
     "client_secret": os.getenv("CLIENT_SECRET"),
     "refresh_token": os.getenv("REFRESH_TOKEN"),
     "login_customer_id": os.getenv("LOGIN_CUSTOMER_ID"),
-    "use_proto_plus": True
+    "use_proto_plus": True,
 }
 
 client = GoogleAdsClient.load_from_dict(config)
 
-
 @app.route("/")
 def home():
-    return jsonify({"status": "API do Google Ads rodando com sucesso!"})
+    return jsonify({"status": "API do Google Ads rodando com Vertex AI!"})
 
 
+# 📊 Campanhas
 @app.route("/campanhas")
 def campanhas():
     try:
@@ -45,14 +45,14 @@ def campanhas():
                 metrics.average_cpm,
                 metrics.conversions
             FROM campaign
-            LIMIT 50
+            LIMIT 100
         """
 
         response = ga_service.search(customer_id=customer_id, query=query)
 
-        campanhas = []
+        result = []
         for row in response:
-            campanhas.append({
+            result.append({
                 "id": str(row.campaign.id),
                 "nome": row.campaign.name,
                 "status": row.campaign.status.name,
@@ -71,14 +71,15 @@ def campanhas():
                 }
             })
 
-        return jsonify(campanhas)
+        return jsonify(result)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
+# 🔑 Palavras-chave
 @app.route("/palavras-chave")
-def palavras_chave():
+def palavras():
     try:
         customer_id = os.getenv("CUSTOMER_ID")
         ga_service = client.get_service("GoogleAdsService")
@@ -104,9 +105,9 @@ def palavras_chave():
 
         response = ga_service.search(customer_id=customer_id, query=query)
 
-        palavras = []
+        result = []
         for row in response:
-            palavras.append({
+            result.append({
                 "campanha_id": str(row.campaign.id),
                 "campanha_nome": row.campaign.name,
                 "grupo_id": str(row.ad_group.id),
@@ -123,14 +124,15 @@ def palavras_chave():
                 }
             })
 
-        return jsonify(palavras)
+        return jsonify(result)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/segmentacao")
-def segmentacao():
+# 🏹 Segmentação
+@app.route("/publico")
+def publico():
     try:
         customer_id = os.getenv("CUSTOMER_ID")
         ga_service = client.get_service("GoogleAdsService")
@@ -139,28 +141,66 @@ def segmentacao():
             SELECT
                 campaign.id,
                 campaign.name,
-                campaign_criterion.location.geo_target_constant,
-                campaign_criterion.device.type,
+                campaign_criterion.age_range.type,
                 campaign_criterion.gender.type,
-                campaign_criterion.age_range.type
+                campaign_criterion.device.type,
+                campaign_criterion.location.geo_target_constant
             FROM campaign_criterion
             LIMIT 100
         """
 
         response = ga_service.search(customer_id=customer_id, query=query)
 
-        segmentacoes = []
+        result = []
         for row in response:
-            segmentacoes.append({
+            result.append({
                 "campanha_id": str(row.campaign.id),
                 "campanha_nome": row.campaign.name,
-                "local": getattr(row.campaign_criterion.location, "geo_target_constant", None),
-                "dispositivo": getattr(row.campaign_criterion.device, "type_", None),
+                "idade": getattr(row.campaign_criterion.age_range, "type_", None),
                 "genero": getattr(row.campaign_criterion.gender, "type_", None),
-                "faixa_etaria": getattr(row.campaign_criterion.age_range, "type_", None)
+                "dispositivo": getattr(row.campaign_criterion.device, "type_", None),
+                "local": getattr(row.campaign_criterion.location, "geo_target_constant", None)
             })
 
-        return jsonify(segmentacoes)
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# 🏆 Leilão
+@app.route("/leilao")
+def leilao():
+    try:
+        customer_id = os.getenv("CUSTOMER_ID")
+        ga_service = client.get_service("GoogleAdsService")
+
+        query = """
+            SELECT
+                campaign.id,
+                campaign.name,
+                auction_insight.search_impression_share,
+                auction_insight.absolute_top_impression_share,
+                auction_insight.top_impression_share,
+                auction_insight.outranking_share
+            FROM auction_insight_view
+            LIMIT 100
+        """
+
+        response = ga_service.search(customer_id=customer_id, query=query)
+
+        result = []
+        for row in response:
+            result.append({
+                "campanha_id": str(row.campaign.id),
+                "campanha_nome": row.campaign.name,
+                "impressao_search": row.auction_insight.search_impression_share,
+                "impressao_topo_absoluto": row.auction_insight.absolute_top_impression_share,
+                "impressao_topo": row.auction_insight.top_impression_share,
+                "outranking_share": row.auction_insight.outranking_share,
+            })
+
+        return jsonify(result)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
