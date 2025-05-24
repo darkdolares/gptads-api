@@ -1,47 +1,14 @@
-# 🔒 Arquivo de credenciais do Google Cloud
-chave.json
-
-# ⚙️ Ambientes virtuais Python
-venv/
-.venv/
-
-# ⚙️ Arquivos de cache do Python
+# Python
 __pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.pdb
+*.pyc
 
-# 🚫 Arquivos de log
-*.log
+# Google credentials
+chave.json
+googleads.yaml
 
-# 🚫 Arquivos temporários
-*.tmp
-*.swp
-*.swo
-
-# 🌍 Arquivos de configuração local/env
+# Env files
 .env
-*.env
 
-# 🏗️ Build / distribuições
-build/
-dist/
-*.egg-info/
-
-# 📦 Dependências instaladas localmente
-__pypackages__/
-
-# 💻 Arquivos do sistema
+# Sistema
 .DS_Store
-Thumbs.db
-
-# ⚙️ Configurações do VSCode (opcional)
-.vscode/
-
-# 🚀 Arquivos de deploy temporários do Render (se usar docker ou builds locais)
-render-build/
-
-# 🔑 Backup de credenciais (se você gerar algum)
-*.backup.json
-*.bak
+*.log
