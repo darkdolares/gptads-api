@@ -1,52 +1,46 @@
-from flask import Flask, jsonify, send_file
-from google.ads.googleads.client import GoogleAdsClient
+from flask import Flask, jsonify, request
+from vertexai.language_models import TextGenerationModel
+from vertexai import init
 import os
+import json
+from google.oauth2 import service_account
 
 app = Flask(__name__)
 
-@app.route("/openapi.json", methods=["GET"])
-def openapi_spec():
-    return send_file("openapi.yaml", mimetype="application/yaml")
+# Credenciais via variável de ambiente
+creds_info = json.loads(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON"))
+credentials = service_account.Credentials.from_service_account_info(creds_info)
 
-# Carrega configurações da API a partir das variáveis de ambiente
-config = {
-    "developer_token": os.environ.get("DEVELOPER_TOKEN"),
-    "client_id": os.environ.get("CLIENT_ID"),
-    "client_secret": os.environ.get("CLIENT_SECRET"),
-    "refresh_token": os.environ.get("REFRESH_TOKEN"),
-    "login_customer_id": os.environ.get("LOGIN_CUSTOMER_ID"),
-    "use_proto_plus": True
-}
+# Inicializa Vertex
+init(
+    project=os.getenv("PROJECT_ID"),
+    location=os.getenv("LOCATION"),
+    credentials=credentials
+)
 
-client = GoogleAdsClient.load_from_dict(config)
+model = TextGenerationModel.from_pretrained("text-bison")
 
-@app.route("/campanhas", methods=["GET"])
-def campanhas():
-    ga_service = client.get_service("GoogleAdsService")
 
-    query = """
-        SELECT
-            campaign.id,
-            campaign.name,
-            campaign.status
-        FROM campaign
-        LIMIT 100
-    """
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"status": "API do Vertex AI rodando!"})
 
-    customer_id = os.environ.get("CUSTOMER_ID")
 
-    response = ga_service.search(customer_id=customer_id, query=query)
+@app.route("/gerar", methods=["GET"])
+def gerar():
+    prompt = request.args.get("prompt")
+    if not prompt:
+        return jsonify({"erro": "Parâmetro 'prompt' é obrigatório"}), 400
 
-    resultado = []
-    for row in response:
-        resultado.append({
-            "id": int(row.campaign.id),
-            "nome": row.campaign.name,
-            "status": row.campaign.status.name
-        })
+    resposta = model.predict(
+        prompt,
+        temperature=0.2,
+        max_output_tokens=256,
+    )
 
-    return jsonify(resultado)
+    return jsonify({"resposta": resposta.text})
+
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
