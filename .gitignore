@@ -1,0 +1,47 @@
+# 🔒 Arquivo de credenciais do Google Cloud
+chave.json
+
+# ⚙️ Ambientes virtuais Python
+venv/
+.venv/
+
+# ⚙️ Arquivos de cache do Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+
+# 🚫 Arquivos de log
+*.log
+
+# 🚫 Arquivos temporários
+*.tmp
+*.swp
+*.swo
+
+# 🌍 Arquivos de configuração local/env
+.env
+*.env
+
+# 🏗️ Build / distribuições
+build/
+dist/
+*.egg-info/
+
+# 📦 Dependências instaladas localmente
+__pypackages__/
+
+# 💻 Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# ⚙️ Configurações do VSCode (opcional)
+.vscode/
+
+# 🚀 Arquivos de deploy temporários do Render (se usar docker ou builds locais)
+render-build/
+
+# 🔑 Backup de credenciais (se você gerar algum)
+*.backup.json
+*.bak
